@@ -4,6 +4,9 @@
  * (Extensions > Apps Script). The game sends each student's progress every
  * couple of minutes. The "Class Reports" tab keeps ONE row per student per
  * day and updates it in place. See TEACHER-SETUP.md for the steps.
+ *
+ * @OnlyCurrentDoc  Limits this script to this one spreadsheet, so it can
+ *                  never open or change any of your other Google files.
  */
 
 var SHEET_NAME = 'Class Reports';
@@ -42,7 +45,7 @@ function doPost(e) {
 
 /** Lets you open the web app link in a browser to check it is working. */
 function doGet() {
-  return ContentService.createTextOutput('Supermarket Quest report receiver is working. (Version 2: one row per student per day)');
+  return ContentService.createTextOutput('Supermarket Quest report receiver is working. (Version 3: one row per student per day, this sheet only)');
 }
 
 function getSheet_() {

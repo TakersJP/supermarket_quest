@@ -42,17 +42,26 @@ You only do this setup once. It takes about 10 minutes.
 
 **Check it works:** paste the URL into a new browser tab. You should see "Supermarket Quest report receiver is working."
 
-## Step 4: Put the link in the game
+## Step 4: Put the link in the game (kept secret on GitHub)
 
-1. Open `settings.js` in the game folder with any text editor.
-2. Paste your URL between the quotes after `reportUrl:`:
-   ```js
-   reportUrl: 'https://script.google.com/macros/s/AKfy...your-code.../exec',
-   ```
-3. Optional: add your class name, for example `className: 'Room 12'`.
-4. Save the file. If the game is on GitHub Pages, upload the new `settings.js` there too.
+The link is stored as a hidden **secret** on GitHub, not in the game's files, so nobody browsing your repository can see it.
+
+1. On GitHub, open your repository and go to **Settings → Secrets and variables → Actions**.
+2. Click **New repository secret**.
+   - **Name:** `REPORT_URL`
+   - **Secret:** paste your Web app URL
+   - Click **Add secret**.
+3. Go to **Settings → Pages**. Under **Build and deployment → Source**, choose **GitHub Actions**.
+4. Make sure your repository has the file `.github/workflows/deploy.yml` from the game folder. To add it on the GitHub website: **Add file → Create new file**, type `.github/workflows/deploy.yml` as the name, paste the file's contents, and click **Commit changes**.
+5. Open the **Actions** tab. A "Publish game" run starts automatically. Wait for the green ✅ (about a minute).
+
+From now on, every time you upload or change files, the game republishes itself with the secret link added.
+
+**Optional:** to name your class in the sheet, set `className` in `settings.js`, for example `className: 'Room 12'`. Leave `reportUrl` empty in that file.
 
 That's it. On the main menu, students now need to type their full name before they can choose a mission.
+
+> **Note:** the live game still contains the link, because iPads need it to send reports, but it no longer appears anywhere in your repository. The link can only *send* reports. It can't show your sheet.
 
 ## What you'll see in the sheet
 
