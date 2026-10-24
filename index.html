@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en-CA">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Supermarket Quest">
+  <meta name="theme-color" content="#ff7a59">
+  <title>Supermarket Quest</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="app">
+
+    <!-- ============ MAIN MENU ============ -->
+    <section id="screen-menu" class="screen active" aria-labelledby="menu-title">
+      <div class="store-front">
+        <div class="awning" aria-hidden="true"></div>
+        <div class="store-sign">
+          <span class="sign-cart" aria-hidden="true">🛒</span>
+          <h1 id="menu-title">Supermarket Quest</h1>
+          <span class="sign-cart" aria-hidden="true">🍎</span>
+        </div>
+        <div class="store-windows" aria-hidden="true">
+          <div class="window">🥖🧀🥛</div>
+          <div class="door"><span>OPEN</span></div>
+          <div class="window">🍌🥕🍇</div>
+        </div>
+      </div>
+
+      <div class="mascot-row">
+        <div class="mascot" aria-hidden="true">🦫</div>
+        <div class="bubble">
+          Hi, I'm <strong>Maple the Beaver</strong>! Pick a shopping mission. You'll skip count, plan a budget, and pay with Canadian money!
+        </div>
+      </div>
+
+      <div class="name-card" id="name-card">
+        <label for="in-name">👋 What's your full name?</label>
+        <input id="in-name" maxlength="40" autocomplete="off" autocapitalize="words" autocorrect="off" spellcheck="false" placeholder="First and last name">
+      </div>
+
+      <h2 class="section-title">Choose Your Mission</h2>
+      <div id="mission-cards" class="mission-cards"></div>
+
+      <button id="btn-sound" class="sound-toggle" type="button" aria-pressed="true" aria-label="Sound on">🔊</button>
+    </section>
+
+    <!-- ============ STAGE 1: BRIEFING ============ -->
+    <section id="screen-briefing" class="screen" aria-labelledby="brief-title">
+      <header class="topbar">
+        <button class="btn btn-ghost" data-nav="menu" type="button">⬅ Menu</button>
+        <div class="stage-dots" aria-label="Stage 1 of 3"><span class="on">1</span><span>2</span><span>3</span></div>
+        <div class="topbar-spacer"></div>
+      </header>
+      <div class="brief-wrap">
+        <div class="brief-card">
+          <div class="brief-badge" id="brief-emoji" aria-hidden="true">🍽️</div>
+          <p class="brief-level" id="brief-level">Easy</p>
+          <h2 id="brief-title">Mission: Family Dinner</h2>
+          <p class="brief-story" id="brief-story"></p>
+          <div class="wallet-box">
+            <span class="wallet-icon" aria-hidden="true">👛</span>
+            <span>Your budget: <strong id="brief-budget">$35</strong></span>
+          </div>
+        </div>
+        <div class="list-paper">
+          <h3>📝 Shopping List</h3>
+          <table class="list-table">
+            <thead><tr><th scope="col">Grocery</th><th scope="col">Quantity</th><th scope="col">Price per item</th></tr></thead>
+            <tbody id="brief-list"></tbody>
+          </table>
+          <div id="brief-choices"></div>
+          <ul class="brief-rules">
+            <li>🔢 Answer a skip-counting question to put each item in your cart.</li>
+            <li>🧾 At the checkout, work out your total and check your budget.</li>
+            <li>💵 Then pay with Canadian money and count your change!</li>
+          </ul>
+        </div>
+      </div>
+      <div class="center-row">
+        <button id="btn-start-shopping" class="btn btn-big btn-go" type="button">🛒 Start Shopping</button>
+      </div>
+    </section>
+
+    <!-- ============ STAGE 2: SHOP ============ -->
+    <section id="screen-shop" class="screen" aria-labelledby="shop-title">
+      <header class="topbar">
+        <button class="btn btn-ghost" data-nav="menu" type="button">⬅ Menu</button>
+        <div class="stage-dots" aria-label="Stage 2 of 3"><span class="done">1</span><span class="on">2</span><span>3</span></div>
+        <div class="budget-chip">👛 Budget: <strong class="js-budget">$35</strong></div>
+      </header>
+      <div class="shop-layout">
+        <div class="shop-main">
+          <div class="mascot-row small">
+            <div class="mascot" aria-hidden="true">🦫</div>
+            <div class="bubble" id="shop-bubble" aria-live="polite">Tap a grocery on the shelf to add it to your cart.</div>
+          </div>
+          <h2 id="shop-title" class="sr-only">Supermarket shelves</h2>
+          <div id="shelves"></div>
+        </div>
+        <aside class="shop-side" aria-label="Your shopping list and cart">
+          <div class="side-card">
+            <h3>📝 My List</h3>
+            <ul id="progress-list" class="progress-list"></ul>
+          </div>
+          <div class="side-card cart-card">
+            <h3><span id="cart-icon" class="cart-icon" aria-hidden="true">🛒</span> My Cart</h3>
+            <ul id="cart-list" class="cart-list"></ul>
+            <p class="cart-note">The cart doesn't add up your total. That's your job at the checkout!</p>
+          </div>
+          <button id="btn-to-budget" class="btn btn-big btn-go" type="button" disabled>Collect everything first</button>
+        </aside>
+      </div>
+    </section>
+
+    <!-- ============ STAGE 3: CHECKOUT (receipt + payment) ============ -->
+    <section id="screen-checkout" class="screen" aria-labelledby="checkout-title">
+      <header class="topbar">
+        <button class="btn btn-ghost" id="btn-back-shop" type="button">⬅ Back to Store</button>
+        <div class="stage-dots" aria-label="Stage 3 of 3"><span class="done">1</span><span class="done">2</span><span class="on">3</span></div>
+        <div class="budget-chip">👛 Wallet: <strong class="js-budget">$35</strong></div>
+      </header>
+      <h2 id="checkout-title" class="sr-only">Checkout counter</h2>
+      <div class="mascot-row small">
+        <div class="mascot" aria-hidden="true">🦫</div>
+        <div class="bubble" id="checkout-bubble" aria-live="polite">Work out each cost, then your total.</div>
+      </div>
+      <div class="checkout-layout">
+
+        <!-- Step 1-2: receipt and budget check -->
+        <div class="receipt" role="group" aria-labelledby="receipt-title">
+          <div class="receipt-head">
+            <h3 id="receipt-title">🧾 Your Receipt</h3>
+            <p id="receipt-mission">Family Dinner</p>
+          </div>
+          <div id="receipt-rows"></div>
+          <div class="receipt-line total-line">
+            <label for="in-total">Total cost</label>
+            <div class="money-input"><span class="pre">$</span><input id="in-total" inputmode="decimal" autocomplete="off" aria-describedby="hint-total"></div>
+            <button class="hint-btn" type="button" data-hint="total" aria-label="Hint for total">💡</button>
+          </div>
+          <p class="field-hint" id="hint-total" hidden></p>
+
+          <div id="enough-block" class="receipt-block" hidden>
+            <div class="receipt-line">
+              <span>Money in your wallet</span><strong class="js-budget">$35</strong>
+            </div>
+            <p class="enough-q">Do you have enough money for everything in your cart?</p>
+            <div class="yesno">
+              <button class="btn btn-choice" type="button" data-enough="yes">👍 Yes</button>
+              <button class="btn btn-choice" type="button" data-enough="no">👎 No</button>
+            </div>
+          </div>
+
+          <div id="over-block" class="receipt-block" hidden>
+            <div class="receipt-line total-line">
+              <label for="in-over">How much over budget?</label>
+              <div class="money-input"><span class="pre">$</span><input id="in-over" inputmode="decimal" autocomplete="off" aria-describedby="hint-over"></div>
+              <button class="hint-btn" type="button" data-hint="over" aria-label="Hint for how much over budget">💡</button>
+            </div>
+            <p class="field-hint" id="hint-over" hidden></p>
+          </div>
+
+          <div class="receipt-actions">
+            <button id="btn-check-budget" class="btn btn-big btn-check" type="button">✔ Check My Answers</button>
+            <button id="btn-swap" class="btn btn-big btn-warn" type="button" hidden>🔄 Back to the Store to Swap a Treat</button>
+          </div>
+          <div class="receipt-zigzag" aria-hidden="true"></div>
+        </div>
+
+        <!-- Step 3-4: pay and count change -->
+        <div class="pay-side" id="pay-side">
+          <div class="pay-lock" id="pay-lock">🔒 Finish your receipt first, then pay here.</div>
+          <div class="register">
+            <div class="register-screen">
+              <div><span>TOTAL</span><strong id="reg-total">?</strong></div>
+              <div><span>SELECTED</span><strong id="reg-selected">$0</strong></div>
+            </div>
+            <div class="register-body">
+              <div class="register-keys" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+              <div class="cashier" aria-hidden="true">🧑‍💼</div>
+            </div>
+            <div class="register-drawer" aria-hidden="true"></div>
+          </div>
+          <div class="side-card">
+            <h3 id="pay-title">Your Payment</h3>
+            <div id="pay-tray" class="pay-tray" aria-label="Money you have selected. Tap a piece to take it back." aria-live="polite"></div>
+            <div class="pay-actions">
+              <button id="btn-clear-pay" class="btn btn-ghost" type="button">↩ Clear</button>
+              <button id="btn-pay" class="btn btn-go" type="button">💳 Pay</button>
+            </div>
+            <div id="enough-pay" class="inline-q" hidden>
+              <p id="enough-pay-q">Is this enough money?</p>
+              <div class="yesno">
+                <button class="btn btn-choice" type="button" data-payenough="yes">👍 Yes, pay!</button>
+                <button class="btn btn-choice" type="button" data-payenough="no">👎 No, add more</button>
+              </div>
+            </div>
+            <div id="change-block" class="inline-q" hidden>
+              <div class="change-sum">
+                <div><span>Total cost</span><strong id="ch-total">$30</strong></div>
+                <div><span>Money paid</span><strong id="ch-paid">$35</strong></div>
+              </div>
+              <label for="in-change" class="change-label">How much change should you receive?</label>
+              <div class="change-row">
+                <div class="money-input"><span class="pre">$</span><input id="in-change" inputmode="decimal" autocomplete="off"></div>
+                <button id="btn-check-change" class="btn btn-check" type="button">✔ Check</button>
+                <button class="hint-btn" type="button" id="btn-hint-change" aria-label="Hint for change">💡</button>
+              </div>
+              <p class="field-hint" id="hint-change" hidden></p>
+              <div id="change-given" class="change-given"></div>
+            </div>
+            <button id="btn-finish" class="btn btn-big btn-go" type="button" hidden>🎉 Finish Mission</button>
+          </div>
+          <div class="side-card">
+            <h3>Canadian Money <small>(tap to add)</small></h3>
+            <div id="money-bank" class="money-bank"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ MISSION COMPLETE ============ -->
+    <section id="screen-complete" class="screen" aria-labelledby="done-title">
+      <div id="confetti" class="confetti" aria-hidden="true"></div>
+      <div class="done-wrap">
+        <div class="done-trophy" aria-hidden="true">🏆</div>
+        <h2 id="done-title">Mission Complete!</h2>
+        <p class="done-sub" id="done-sub">You are a Super Shopper!</p>
+        <div class="done-stats" id="done-stats"></div>
+        <div class="report-card" id="report-card">
+          <h3>📋 My Report</h3>
+          <div class="report-cols">
+            <div class="report-col good"><h4>🌟 You were great at</h4><ul id="report-strong"></ul></div>
+            <div class="report-col grow"><h4>💪 Keep practising</h4><ul id="report-practise"></ul></div>
+          </div>
+        </div>
+        <div class="done-skills">
+          <h3>⭐ Math skills you practiced</h3>
+          <ul id="done-skills"></ul>
+        </div>
+        <div class="done-buttons">
+          <button id="btn-again" class="btn btn-big btn-go" type="button">🔁 Play Again</button>
+          <button id="btn-another" class="btn btn-big btn-check" type="button">🗺️ Try Another Mission</button>
+          <button class="btn btn-big btn-ghost" data-nav="menu" type="button">🏠 Main Menu</button>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- ============ QUESTION MODAL ============ -->
+  <div id="q-modal" class="modal" hidden>
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="q-title">
+      <div class="q-emoji" id="q-emoji" aria-hidden="true">🍎</div>
+      <h2 id="q-title">Skip Count!</h2>
+      <div id="q-prompt" class="q-prompt"></div>
+      <div id="q-visual" class="q-visual"></div>
+      <form id="q-form" class="q-form" autocomplete="off">
+        <label for="q-input" id="q-label" class="sr-only">Your answer</label>
+        <span id="q-pre" class="q-pre"></span>
+        <div class="money-input big"><span class="pre" id="q-unit-pre">$</span><input id="q-input" inputmode="decimal" autocomplete="off"><span class="post" id="q-unit-post"></span></div>
+        <button type="submit" class="btn btn-check">✔ Check</button>
+      </form>
+      <p id="q-feedback" class="q-feedback" aria-live="assertive"></p>
+      <p id="q-hint" class="q-hint" hidden></p>
+      <div class="q-actions">
+        <button id="q-hint-btn" class="btn btn-ghost" type="button">💡 Hint</button>
+        <button id="q-cancel" class="btn btn-ghost" type="button">✖ Back to Shelves</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast" aria-live="polite"></div>
+
+  <script src="settings.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
