@@ -43,6 +43,9 @@
 
       <h2 class="section-title">Choose Your Mission</h2>
       <div id="mission-cards" class="mission-cards"></div>
+      <div class="center-row">
+        <button id="btn-demo" class="btn btn-big btn-ghost" type="button">🧑‍🏫 Demo Mission</button>
+      </div>
 
       <button id="btn-sound" class="sound-toggle" type="button" aria-pressed="true" aria-label="Sound on">🔊</button>
     </section>
@@ -274,6 +277,13 @@
   </div>
 
   <div id="toast" class="toast" aria-live="polite"></div>
+
+  <!-- Shown only during the Demo Mission -->
+  <div id="demo-bar" class="demo-bar" hidden>
+    <span class="demo-tag">🧑‍🏫 Demo Mission</span>
+    <button id="btn-demo-skip" class="btn btn-ghost" type="button">Skip ⏭</button>
+    <button id="btn-demo-exit" class="btn btn-ghost" type="button">✖ Exit Demo</button>
+  </div>
 
   <script src="settings.js"></script>
   <script src="script.js"></script>

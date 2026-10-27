@@ -63,6 +63,10 @@ If your school manages iPads with an MDM, or you use an LMS that can host web fi
 
 There are no timers and no penalties.
 
+## Demo Mission
+
+Tap **🧑‍🏫 Demo Mission** on the main menu to show the class how to play in about 2–3 minutes. It is a short "Practice Round" mission on the same screens as the real missions: Apples (2 × $3) and Juice (2 × $2), with $20 to spend. The cart starts empty, so the class answers four quick shelf questions (two per item), then does the receipt (total **$10**), pays, and works out the change (for example **$10** from a $20 bill). A small bar in the bottom corner has **Skip ⏭**, which moves on one step and fills in answers where needed, and **✖ Exit Demo**. No name is needed, and nothing from the demo is saved or sent to your Google Sheet.
+
 ## Missions
 
 | Mission | Level | Budget | Focus |

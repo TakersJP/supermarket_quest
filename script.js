@@ -120,6 +120,34 @@ const MISSIONS = [
   }
 ];
 
+/* Demo Mission: a short practice round on the normal screens. Nothing from it
+   is tracked, saved or sent to the class report. */
+const DEMO_MISSION = {
+  id: 'demo',
+  demo: true,
+  name: 'Practice Round',
+  level: 'Practice',
+  emoji: '🧑‍🏫',
+  budget: 2000,
+  story: 'Let\'s practise together! Buy everything on the list, then pay at the checkout. You have $20 to spend.',
+  items: [
+    { id: 'apple', name: 'Apples', one: 'apple', many: 'apples', emoji: '🍎', price: 300, qty: 2 },
+    { id: 'juice', name: 'Juice', one: 'bottle of juice', many: 'bottles of juice', emoji: '🧃', price: 200, qty: 2 }
+  ],
+  choices: null,
+  distractors: [
+    { id: 'candy', name: 'Candy', emoji: '🍭', price: 200 }
+  ],
+  bonusWays: false,
+  skills: [
+    'Skip counting forward',
+    'Adding money to find a total',
+    'Checking the budget',
+    'Counting Canadian coins and bills',
+    'Making change'
+  ]
+};
+
 /* Canadian money, largest to smallest (values in cents). */
 const MONEY = [
   { v: 5000, type: 'bill', label: '$50', name: 'fifty-dollar bill', cls: 'b50' },
@@ -289,7 +317,14 @@ function show(name) {
   $$('.screen').forEach((s) => s.classList.toggle('active', s.id === 'screen-' + name));
   window.scrollTo(0, 0);
   $$('.screen.active').forEach((s) => (s.scrollTop = 0));
-  if (SESSION) touchSession();
+  const demo = !!(S && S.m.demo);
+  document.body.classList.toggle('demo', demo && name !== 'menu');
+  $('#demo-bar').hidden = !demo || name === 'menu';
+  $('#btn-demo-skip').hidden = name === 'complete';
+  if (SESSION) {
+    if (demo) SESSION.lastActive = Date.now(); // demo time isn't a student's play time
+    else touchSession();
+  }
 }
 
 function toast(msg) {
@@ -317,8 +352,8 @@ function renderMenu() {
 }
 
 /* ---------- STAGE 1: BRIEFING ---------- */
-function startMission(index) {
-  newGame(MISSIONS[index]);
+function startMission(index, mission = MISSIONS[index]) {
+  newGame(mission);
   const m = S.m;
   setBudgetChips();
   $('#brief-emoji').textContent = m.emoji;
@@ -472,6 +507,7 @@ function makeAddQuestion(item, n) {
   if (S.m.id === 'super' && n >= 2) types.push('backward');
   if (n === 1) types = [item.qty === 1 ? 'single' : 'start'];
   if (item.qty === 1) types = ['single'];
+  if (S.m.demo && n > 1) types = ['extend']; // the same question every time, so the teacher knows what's coming
   let type = pick(types.filter((t) => t !== S.lastType).length ? types.filter((t) => t !== S.lastType) : types);
   S.lastType = type;
 
@@ -946,11 +982,6 @@ function renderPayTray() {
 
 function addMoney(v) {
   if (S.checkoutStep !== 'pay' && S.checkoutStep !== 'bonus') return;
-  if (sum(S.pay) + v > S.m.budget) {
-    Sound.oops();
-    checkoutSay(`Whoa! You only have <b>${fmt(S.m.budget)}</b> in your wallet. Try a smaller coin or bill.`);
-    return;
-  }
   Sound.coin();
   S.pay.push(v);
   $('#enough-pay').hidden = true;
@@ -1085,10 +1116,19 @@ function renderComplete() {
   const total = cartTotal();
   const count = sum(cartEntries().map((e) => e.n));
   const change = S.paid - total;
-  saved.completed[S.m.id] = true;
-  Store.save(saved);
+  const demo = !!S.m.demo;
+  if (!demo) {
+    saved.completed[S.m.id] = true;
+    Store.save(saved);
+  }
 
-  $('#done-sub').textContent = `${playerName ? `Great job, ${playerName.split(' ')[0]}! ` : ''}You finished "${S.m.name}"! You are a Super Shopper!`;
+  $('#done-title').textContent = demo ? 'Demo Complete!' : 'Mission Complete!';
+  $('#done-sub').textContent = demo
+    ? 'You\'re ready to shop!'
+    : `${playerName ? `Great job, ${playerName.split(' ')[0]}! ` : ''}You finished "${S.m.name}"! You are a Super Shopper!`;
+  $('#report-card').hidden = demo;
+  $('#btn-again').hidden = demo;
+  $('#btn-another').hidden = demo;
   const stat = (emoji, label, val) => `<div class="stat"><span class="stat-emoji" aria-hidden="true">${emoji}</span><span class="stat-val">${val}</span><span class="stat-lbl">${label}</span></div>`;
   $('#done-stats').innerHTML =
     stat('🛒', 'Groceries purchased', count) +
@@ -1100,9 +1140,63 @@ function renderComplete() {
     (S.bonusDone ? '<li>✅ Bonus: paid the same amount two different ways</li>' : '');
   renderReportCard();
   show('complete');
-  if (SESSION && !S.logged) { S.logged = true; SESSION.finished.push(S.m.name); touchSession(); syncSession(); }
+  if (SESSION && !S.logged && !demo) { S.logged = true; SESSION.finished.push(S.m.name); touchSession(); syncSession(); }
   Sound.win();
   confetti();
+}
+
+/* ---------------------------------------------------------------
+   TEACHER DEMO
+   Runs DEMO_MISSION on the normal screens. No name is needed, and
+   track(), trackHint(), mistake() and renderComplete() leave the class
+   report alone while S.m.demo is set.
+   --------------------------------------------------------------- */
+function startDemo() {
+  Sound.tap();
+  closeQuestion();
+  startMission(-1, DEMO_MISSION);
+}
+
+/** Moves on one step, answering for the class where needed. */
+function skipDemo() {
+  Sound.tap();
+  closeQuestion();
+  const screen = $('.screen.active').id.replace('screen-', '');
+  if (screen === 'briefing') renderShop();
+  else if (screen === 'shop') {
+    listItems().forEach((i) => { S.cart[i.id] = i.qty; });
+    renderCheckout();
+  } else if (S.checkoutStep === 'locked') skipReceipt();
+  else {
+    if (!S.paid) S.paid = S.m.budget; // as if they paid with the money in their wallet
+    renderComplete();
+  }
+}
+
+/** Fills in the receipt and budget check as if the class had answered them. */
+function skipReceipt() {
+  const dollars = (c) => (c / 100).toFixed(c % 100 ? 2 : 0);
+  cartEntries().forEach(({ item, n, cost }) => {
+    const input = $('#row-' + item.id);
+    input.value = dollars(cost);
+    markField(input, true);
+    S.sheet.rows[item.id] = n;
+  });
+  const total = $('#in-total');
+  total.value = dollars(cartTotal());
+  markField(total, true);
+  S.sheet.totalOk = true;
+  S.sheet.enough = true;
+  $('#enough-block').hidden = false;
+  $$('[data-enough]').forEach((b) => (b.disabled = true));
+  $('[data-enough="yes"]').classList.add('right');
+  unlockPayment();
+  checkoutSay(`The total is <b>${fmt(cartTotal())}</b>, which fits your budget of <b>${fmt(S.m.budget)}</b>. 💵 Now pay at the register! Tap coins and bills.`);
+}
+
+function exitDemo() {
+  closeQuestion();
+  renderMenu();
 }
 
 /* ---------------------------------------------------------------
@@ -1145,17 +1239,17 @@ function bump(trackObj, skill, field) {
 function track(skill, ok) {
   if (!S || !skill) return;
   bump(S.track, skill, ok ? 'right' : 'wrong');
-  if (SESSION) { bump(SESSION.track, skill, ok ? 'right' : 'wrong'); touchSession(); }
+  if (SESSION && !S.m.demo) { bump(SESSION.track, skill, ok ? 'right' : 'wrong'); touchSession(); }
 }
 function trackHint(skill) {
   if (!S || !skill) return;
   bump(S.track, skill, 'hints');
-  if (SESSION) { bump(SESSION.track, skill, 'hints'); touchSession(); }
+  if (SESSION && !S.m.demo) { bump(SESSION.track, skill, 'hints'); touchSession(); }
 }
 function mistake(key) {
   if (!S) return;
   S.mistakes[key] = (S.mistakes[key] || 0) + 1;
-  if (SESSION) { SESSION.mistakes[key] = (SESSION.mistakes[key] || 0) + 1; touchSession(); }
+  if (SESSION && !S.m.demo) { SESSION.mistakes[key] = (SESSION.mistakes[key] || 0) + 1; touchSession(); }
 }
 
 /** 3 = strong, 2 = getting there, 1 = needs practice, 0 = not practised */
@@ -1181,7 +1275,6 @@ function rateSkills(trackObj) {
 function checkName() {
   playerName = $('#in-name').value.trim().replace(/\s+/g, ' ').slice(0, 40);
   if (playerName) { openSession(playerName); return true; }
-  if (!reportsOn()) return true;
   const card = $('#name-card');
   card.classList.remove('need'); void card.offsetWidth; card.classList.add('need');
   Sound.oops();
@@ -1246,7 +1339,7 @@ function touchSession() {
 function whereStopped() {
   const active = $('.screen.active');
   const screen = active ? active.id.replace('screen-', '') : '';
-  if (!S || screen === 'menu') return 'Main menu';
+  if (!S || S.m.demo || screen === 'menu') return 'Main menu';
   const m = S.m.name;
   if (screen === 'briefing') return `${m}: reading the mission`;
   if (screen === 'shop') {
@@ -1364,6 +1457,10 @@ function bindEvents() {
     if (t.dataset.tray) { removeMoney(+t.dataset.tray); return; }
     if (t.dataset.payenough) { onPayEnough(t.dataset.payenough); return; }
   });
+
+  $('#btn-demo').addEventListener('click', startDemo);
+  $('#btn-demo-skip').addEventListener('click', skipDemo);
+  $('#btn-demo-exit').addEventListener('click', exitDemo);
 
   $('#btn-start-shopping').addEventListener('click', () => { Sound.tap(); renderShop(); });
   $('#btn-to-budget').addEventListener('click', () => {
